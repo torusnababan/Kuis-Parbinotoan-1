@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Parbinotoan Batak</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: auto;
+        }
+        h1, h2 {
+            color: #0056b3;
+        }
+        .author-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .author-info img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+            border: 2px solid #0056b3;
+        }
+        .author-info div {
+            flex-grow: 1;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .question {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .question p {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .options label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: normal;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #timer {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #d9534f;
+            margin-bottom: 15px;
+            text-align: right;
+        }
+        #results {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #e9ecef;
+            display: none; /* Hidden by default */
+        }
+        .correct {
+            color: green;
+            font-weight: bold;
+        }
+        .incorrect {
+            color: red;
+            font-weight: bold;
+        }
+        .cooldown-message {
+            text-align: center;
+            font-size: 1.2em;
+            color: #d9534f;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #d9534f;
+            border-radius: 5px;
+            background-color: #ffe0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kuis Parbinotoan Batak</h1>
+        
+        <div class="author-info">
+            <img src="torus_nababan.jpg" alt="Foto Torus Manuntun Nababan, S.Pd.,M.Pd">
+            <div>
+                <p style="margin: 0; font-weight: bold;">By. Torus Manuntun Nababan, S.Pd.,M.Pd</p>
+                <p style="margin: 0; font-size: 0.9em; color: #555;">(Pengembang Soal Kuis/guru SMPN 4 Tarutung)</p>
+            </div>
+        </div>
+        <p>Waktu pengerjaan: <span id="timeLimit">15</span> menit</p>
+        <div id="timer">Waktu tersisa: 15:00</div>
+
+        <form id="quizForm">
+            <h2>Tanda Diri</h2>
+            <div class="form-group">
+                <label for="sekolah">Inganan:</label>
+                <input type="text" id="inganan" name="inganan" required>
+            </div>
+            <div class="form-group">
+                <label for="nama">Goar (Lengkap dohot Marga):</label>
+                <input type="text" id="goar" name="goar" required>
+            </div>
+            <div class="form-group">
+                <label for="umur">Umur:</label>
+                <input type="text" id="umur" name="umur" required>
+            </div>
+            <div class="form-group">
+                <label for="semester">Semester:</label>
+                <select id="semester" name="semester" required>
+                    <option value="">Pilih Semester</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tahunAjaran">Taon Parsiajaran:</label>
+                <input type="text" id="tahunAjaran" name="tahunAjaran" placeholder="Contoh: 2024/2025" required>
+            </div>
+
+            <hr>
+
+            <h2>Sungkun-sungkun</h2>
+            <div id="questionsContainer">
+            </div>
+
+            <button type="submit">Kuis nunga sae</button>
+        </form>
+
+        <div id="results">
+            <h2>Hasil Kuis</h2>
+            <p><strong>Goar:</strong> <span id="resultGoar"></span></p>
+            <p><strong>Skor mu:</strong> <span id="score"></span></p>
+            <p id="message"></p>
+            <h3>Detail Jawaban:</h3>
+            <div id="answerDetails">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                type: "bahasa",
+                question: "Aha do lapatan ni hata **'Harotas'** di Bahasa Batak Toba?",
+                options: ["Meja", "Buku", "Kertas", "Pensil"],
+                answer: "Kertas",
+                translation: "Apa arti kata 'Harotas' dalam Bahasa Batak Toba?"
+            },
+            {
+                type: "bahasa",
+                question: "Aha do lapatan ni hata **'Mangan'** di Bahasa Indonesia?",
+                options: ["Minum", "Tidur", "Makan", "Jalan"],
+                answer: "Makan",
+                translation: "Apa arti kata 'Mangan' dalam Bahasa Indonesia?"
+            },
+            {
+                type: "umpama",
+                question: "Aha do lapatan ni umpama: **'Sitiktik ma sigompa, golanggolang ma pangarahutna'**?",
+                options: ["Otik-otik gabe godang", "Ringgas mangula dapot parbue", "Sabar mangalehon las ni roha", "Pintar marroha di ulaon"],
+                answer: "Otik-otik gabe godang", // Sedikit demi sedikit lama-lama menjadi bukit
+                translation: "Apa makna dari umpama: 'Sedikit demi sedikit lama-lama menjadi bukit'?"
+            },
+            {
+                type: "tutur_adat",
+                question: "Di tutur adat Batak, ise do na didok **'Tulang'**?",
+                options: ["Amanguda (hahani ina)", "Ama", "Oppu", "Anak baoa"],
+                answer: "Amanguda (hahani ina)", // Paman (saudara laki-laki ibu)
+                translation: "Dalam sistem kekerabatan Batak, siapa yang dimaksud dengan 'Tulang'?"
+            },
+            {
+                type: "tutur_adat",
+                question: "Ise do na didok **'Bere'** di adat Batak?",
+                options: ["Anak boru", "Anak baoa ni iboto ta", "Ina", "Ama"],
+                answer: "Anak baoa ni iboto ta", // Anak laki-laki dari saudara perempuan kita
+                translation: "Siapa yang disebut 'Bere' dalam adat Batak?"
+            },
+            {
+                type: "budaya",
+                question: "Aha do filosofi utama ni **'Dalihan Natolu'**?",
+                options: ["Tolu dapor na marlapatan parbue", "Tolu songon tumpuan adat na marsiamin-aminan", "Tolu sundut di keluarga", "Tolu jenis sipanganon"],
+                answer: "Tolu songon tumpuan adat na marsiamin-aminan", // Tiga pilar adat yang saling mendukung
+                translation: "Apa filosofi utama dari 'Dalihan Natolu'?"
+            },
+            {
+                type: "bahasa",
+                question: "Hata Batak **'Marsiajar'** lapatanna?",
+                options: ["Marsiula", "Marsiajar", "Marsiende", "Mardalan"],
+                answer: "Marsiajar", // Belajar
+                translation: "Kata Batak 'Marsiajar' berarti?"
+            },
+            {
+                type: "umpama",
+                question: "Umpama **'Adat na hot, uhum na tolu'** marhubungan dohot?",
+                options: ["Aturan na so boi paubahon", "Uhum adat na hot", "Parngoluon siganup ari", "Ulaon marhajian"],
+                answer: "Uhum adat na hot", // Hukum adat yang berlaku
+                translation: "Umpama 'Adat na hot, uhum na tolu' berkaitan dengan?"
+            },
+            {
+                type: "tutur_adat",
+                question: "Goaran **'Ompung'** tu ise do i?",
+                options: ["Natoras", "Ompung (Kakek/Nenek)", "Angkang", "Anggi"],
+                answer: "Ompung (Kakek/Nenek)", // Kakek/Nenek
+                translation: "Panggilan 'Ompung' merujuk pada siapa?"
+            },
+            {
+                type: "bahasa",
+                question: "Aha do Bahasa Indonesia ni **'Huta'**?",
+                options: ["Dolok", "Laut", "Huta/Kampung", "Kota"],
+                answer: "Huta/Kampung", // Desa/Kampung
+                translation: "Apa bahasa Indonesia dari 'Huta'?"
+            },
+            {
+                type: "budaya",
+                question: "Sada unsur penting di **Dalihan Natolu** i ma 'Hula-hula'. Ise do Hula-hula i?",
+                options: ["Na mangalehon boru (Hula-hula)", "Na manjalo boru (Boru)", "Angkang baoa", "Anggi boru"],
+                answer: "Na mangalehon boru (Hula-hula)", // Pihak pemberi gadis (mertua)
+                translation: "Salah satu unsur penting dalam Dalihan Natolu adalah 'Hula-hula'. Siapa itu Hula-hula?"
+            },
+            {
+                type: "bahasa",
+                question: "Molo naeng mandok 'Mauliate' di Bahasa Batak Toba, didok ho **'Mauliate'**. Aha do padananna di Bahasa Batak Mandailing?",
+                options: ["Horas", "Jala", "Boi do", "Tarima Kasih"],
+                answer: "Tarima Kasih",
+                translation: "Jika Anda ingin mengatakan 'Terima Kasih' dalam Bahasa Batak Toba, Anda akan mengatakan 'Mauliate'. Apa padanannya dalam bahasa Batak Mandailing?"
+            },
+            {
+                type: "umpama",
+                question: "Aha do poda ni umpama: **'Anakhon hi do hamoraon di ahu'**?",
+                options: ["Arta do saluhutna di ahu", "Anakku do arta di ahu", "Keluarga do las ni roha di ahu", "Marsiajar i do na ringkot"],
+                answer: "Anakku do arta di ahu", // Anakku adalah harta bagiku
+                translation: "Apa pesan dari umpama: 'Anakku adalah harta bagiku'?"
+            },
+            {
+                type: "tutur_adat",
+                question: "Ise do na didok **'Boru'** di adat Batak?",
+                options: ["Anak baoa", "Anak boru", "Parumaen", "Hela"],
+                answer: "Anak boru", // Anak perempuan
+                translation: "Siapa yang disebut 'Boru' dalam adat Batak?"
+            },
+            {
+                type: "budaya",
+                question: "Bagian ni Dalihan Natolu na marhahombaron dohot keluarga ni parompuan didok?",
+                options: ["Dongan Tubu", "Hula-hula", "Boru", "Pariban"],
+                answer: "Hula-hula", // Hula-hula
+                translation: "Bagian dari Dalihan Natolu yang merupakan keluarga dari pihak istri disebut?"
+            },
+            {
+                type: "bahasa",
+                question: "Hata **'Dame'** di Bahasa Batak Toba lapatanna?",
+                options: ["Guntur", "Parporangan", "Dame", "Marsak"],
+                answer: "Dame", // Damai
+                translation: "Kata 'Dame' dalam Bahasa Batak berarti?"
+            },
+            {
+                type: "umpama",
+                question: "Umpama Batak na mandok 'Tua hotang, tuat simarate ate' marlapatan taringot:",
+                options: ["Ringgas mangula", "Ganjang umur jala dapot pasu-pasu", "Manghormati natoras", "Hagogoon ni parsadaan"],
+                answer: "Ganjang umur jala dapot pasu-pasu", // Panjang umur dan diberkati
+                translation: "Umpama Batak yang berarti 'Tua hotang, tuat simarate ate' memiliki arti kiasan tentang:"
+            },
+            {
+                type: "tutur_adat",
+                question: "Amang sian damang (anggini ama) didok?",
+                options: ["Amangboru", "Amangtua", "Bapauda", "Tulang"],
+                answer: "Bapauda",
+                translation: "Paman dari pihak ayah (adik laki-laki ayah) disebut?"
+            },
+            {
+                type: "bahasa",
+                question: "Aha do lapatan ni hata **'Ulos'**?",
+                options: ["Pangkean adat", "Jabu adat", "Tarian adat", "Parhobas musik tradisional"],
+                answer: "Pangkean adat", // Pakaian adat
+                translation: "Apa arti kata 'Ulos'?"
+            },
+            {
+                type: "budaya",
+                question: "Dalihan Natolu adong tolu unsur utama. Dungkon Hula-hula dohot Boru, aha do unsur na patoluhon?",
+                options: ["Anak", "Ina", "Dongan Tubu", "Pariban"],
+                answer: "Dongan Tubu",
+                translation: "Dalihan Natolu memiliki tiga unsur utama. Selain Hula-hula dan Boru, apa unsur ketiganya?"
+            }
+        ];
+
+        const timeLimitInMinutes = 15;
+        let timeLeft = timeLimitInMinutes * 60; // seconds
+        let timerInterval;
+
+        const quizForm = document.getElementById('quizForm');
+        const questionsContainer = document.getElementById('questionsContainer');
+        const timerDisplay = document.getElementById('timer');
+        const resultsDiv = document.getElementById('results');
+        const resultGoar = document.getElementById('resultGoar'); // Mengubah dari resultNama menjadi resultGoar
+        const scoreDisplay = document.getElementById('score');
+        const messageDisplay = document.getElementById('message');
+        const answerDetailsDiv = document.getElementById('answerDetails');
+
+        // Durasi cooldown: 1 jam dalam milidetik
+        const cooldownDuration = 60 * 60 * 1000;
+        // Kunci untuk menyimpan timestamp di localStorage
+        const lastQuizCompletionKey = 'lastQuizCompletionTime'; 
+
+        // Fungsi untuk mengacak array (algoritma Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Fungsi untuk menghasilkan dan menampilkan pertanyaan
+        function generateQuestions() {
+            shuffleArray(questions); // Acak urutan pertanyaan
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.classList.add('question');
+                
+                // Acak pilihan jawaban untuk setiap pertanyaan
+                const shuffledOptions = [...q.options];
+                shuffleArray(shuffledOptions);
+
+                questionDiv.innerHTML = `
+                    <p>${index + 1}. ${q.question}</p>
+                    <div class="options">
+                        ${shuffledOptions.map((option) => `
+                            <label>
+                                <input type="radio" name="q${index}" value="${option}"> ${option}
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                questionsContainer.appendChild(questionDiv);
+            });
+        }
+
+        // Fungsi untuk memulai timer
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `Waktu tersisa: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Nunga salpu tingki! Kuis otomatis disubmit.");
+                    quizForm.dispatchEvent(new Event('submit')); // Otomatis submit formulir
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        // Penanganan saat formulir disubmit
+        quizForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Mencegah pengiriman formulir default
+            clearInterval(timerInterval); // Hentikan timer
+
+            let totalScore = 0; // Inisialisasi skor total
+            const pointsPerCorrect = 5; // Poin untuk setiap jawaban benar
+            const maxPossibleScore = questions.length * pointsPerCorrect; // Skor maksimum yang mungkin
+
+            const answers = {};
+            
+            questions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
+                const userAnswer = selectedOption ? selectedOption.value : null;
+                answers[`q${index}`] = userAnswer;
+
+                if (userAnswer === q.answer) {
+                    totalScore += pointsPerCorrect; // Tambahkan poin jika jawaban benar
+                }
+                // Tidak ada pengurangan untuk jawaban salah atau tidak dijawab
+            });
+
+            // Simpan timestamp selesai kuis di localStorage
+            localStorage.setItem(lastQuizCompletionKey, Date.now());
+
+            // Tampilkan hasil
+            resultGoar.textContent = document.getElementById('goar').value;
+            scoreDisplay.textContent = `${totalScore} / ${maxPossibleScore}`; // Tampilkan skor saat ini dari total maksimum
+
+            // Tentukan pesan berdasarkan skor
+            if (totalScore >= (0.80 * maxPossibleScore)) { // 80% dari skor maksimum
+                messageDisplay.textContent = "Horas! Selamat, Ho do na monang!"; 
+                messageDisplay.style.color = "green";
+            } else {
+                messageDisplay.textContent = "Dang maruntung dope ho, marsiajar muse!"; 
+                messageDisplay.style.color = "red";
+            }
+
+            // Tampilkan detail jawaban
+            answerDetailsDiv.innerHTML = '';
+            questions.forEach((q, index) => {
+                const userAnswer = answers[`q${index}`];
+                const detailDiv = document.createElement('p');
+                let answerStatusClass = '';
+                let userAnswerText = userAnswer !== null ? userAnswer : 'Dang dijawab';
+
+                if (userAnswer === q.answer) {
+                    answerStatusClass = 'correct';
+                } else if (userAnswer !== null) { // Jika dijawab tapi salah
+                    answerStatusClass = 'incorrect';
+                } else { // Jika tidak dijawab
+                    answerStatusClass = ''; // Tidak ada kelas khusus
+                }
+
+                detailDiv.innerHTML = `
+                    <strong>${index + 1}. ${q.question}</strong><br>
+                    Jawabanmu: <span class="${answerStatusClass}">
+                        ${userAnswerText}
+                    </span><br>
+                    Kunci Jawaban: <span class="correct">${q.answer}</span>
+                `;
+                answerDetailsDiv.appendChild(detailDiv);
+            });
+
+            quizForm.style.display = 'none'; // Sembunyikan formulir kuis
+            resultsDiv.style.display = 'block'; // Tampilkan div hasil
+        });
+
+        // Inisialisasi kuis dan cek cooldown saat halaman dimuat
+        window.onload = function() {
+            const lastCompletionTime = localStorage.getItem(lastQuizCompletionKey);
+            if (lastCompletionTime) {
+                const timeElapsed = Date.now() - parseInt(lastCompletionTime);
+                if (timeElapsed < cooldownDuration) {
+                    const remainingTime = cooldownDuration - timeElapsed;
+                    const minutes = Math.floor(remainingTime / (1000 * 60));
+                    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+                    quizForm.style.display = 'none';
+                    timerDisplay.style.display = 'none';
+                    const cooldownMessageDiv = document.createElement('div');
+                    cooldownMessageDiv.classList.add('cooldown-message');
+                    cooldownMessageDiv.innerHTML = `
+                        Nunga dipasada ho kuis on. <br>
+                        Ula muse di **${minutes.toString().padStart(2, '0')} menit dohot ${seconds.toString().padStart(2, '0')} detik**.
+                    `;
+                    document.querySelector('.container').insertBefore(cooldownMessageDiv, document.getElementById('quizForm'));
+                    return; // Hentikan inisialisasi kuis jika masih dalam masa cooldown
+                }
+            }
+            // Jika tidak ada cooldown atau cooldown sudah berakhir, inisialisasi kuis
+            generateQuestions();
+            startTimer();
+        };
+    </script>
+</body>
+</html>
